@@ -54,3 +54,19 @@ node_modules/
 dist/
 out/
 logs/
+
+
+# STORM SOFT Security & Large File Shield
+.env
+.env.*
+*credential*.json
+*secret*
+*.pfx
+*.cer
+*.key
+deepseek_key.txt
+google-credentials.json
+installer/Output/
+*.tmp*
+*.wal
+
