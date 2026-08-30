@@ -1,106 +1,46 @@
-# Secrets
-.tauri-updater-key
-.tauri-updater-key.pub
-
-# Dependencies
-/node_modules
-/.pnp
-.pnp.js
-
-# Build artifacts
-/.next/
-/out/
-/dist/
-*.tsbuildinfo
-
-# Tauri build artifacts
-/src-tauri/target/
-/src-tauri/Cargo.lock
-
-# External tools & large binaries (download separately)
-/tools/AssetRipper/
-/tools/UABEA/
-/tools/UIToolkitTranslator/
-/tools/assetstools_inject/
-/tools/drat/
-/tools/esoteric_ebb_strings/
-/ue-translator-dll/build/
-/unity-translator-dll/build/
-*.pdb
-*.rlib
-*.rmeta
-*.obj
-*.lib
+# Build outputs & Executables
+bin/
+obj/
+dist/
+build/
+out/
+target/
+Assembling/
+scratch/
+gar_data/
 *.exe
-!scripts/*.exe
-
-# Temp/study files (large binaries)
-/public/tmpdastudiare/
-
-# Local environment files
-.env
-.env*.local
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Secrets and sensitive data
-secrets/
-*.key
-*.pem
-*.p12
+*.dll
+*.obj
+*.zip
+*.7z
+*.rar
+*.tar.gz
+*.apk
+*.aab
+*.msi
 *.pfx
-config/secrets.json
+*.cer
 
-# GameStringer data directory (profiles, settings, etc.)
-/gamestringer_data/
+# Keep tools in STORM SWITCH BOX if needed
+!tools/**/*.exe
+!tools/**/*.dll
 
-# Log files
-/logs/
-yarn-error.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-*.log
+# Keep branding icons
+!Files/*.ico
+!Files/*.png
+!Files/*.svg
 
-# Prisma
-**/dev.db
-**/dev.db-journal
-
-# IDE configuration
+# IDE & Environment
+.vs/
 .vscode/
 .idea/
-
-# OS-generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
+*.suo
+*.user
 Thumbs.db
-
-# Temporary files
+Desktop.ini
+*.log
 *.tmp
-*.temp
-.port
-/temp/
-__s1.txt
-__testout.txt
-__tr.json
+node_modules/
 
-# Test artifacts
-*.exe
-*.pdb
-/tests/integration/*.html
-/tests/integration/*.vdf
+.next/
 
-# Cache
-.cache/
-.cache_old/
-
-# AI tools
-.claude/
-.kiro/

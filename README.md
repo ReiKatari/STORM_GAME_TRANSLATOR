@@ -1,65 +1,37 @@
-<div align="center">
+# STORM GAME TRANSLATOR
 
-<img src="logo.png" width="128" height="128" alt="STORM GAME TRANSLATOR Logo" />
+## **О проекте**
+STORM GAME TRANSLATOR — интеллектуальный инструмент для распознавания (OCR) и перевода текста в реальном времени из окон любых видеоигр, эмуляторов и визуальных новелл. Поддерживает работу с локальными нейросетевыми моделями (LLM через Ollama) и быстрыми оффлайн-движками перевода.
 
-# ⚡ STORM GAME TRANSLATOR
+## **Происхождение и форки**
+Оригинальная разработка ReiKatari.
 
-<p align="center">
-  <b>Интеллектуальный игровой оверлей-переводчик с многоязычным машинным переводом.</b>
-</p>
+## **Технологический стек**
+- **Языки программирования**: TypeScript, Python, C++
+- **Оптическое распознавание (OCR)**: Tesseract OCR, Windows Media OCR Engine
+- **AI и Перевод**: Ollama API, Llama.cpp, LibreTranslate, DeepL API, Google Translate Engine
+- **Интерфейс**: React, Tailwind CSS, Electron с поддержкой прозрачных оверлеев (Transparent Click-through Overlay)
 
-[![Version](https://img.shields.io/badge/version-1.0.0-00D2FF.svg?style=for-the-badge)](https://github.com/ReiKatari/STORM_GAME_TRANSLATOR)
-[![Platform](https://img.shields.io/badge/Platform-Windows%2011%20%7C%2010-0EA5E9.svg?style=for-the-badge)](https://github.com/ReiKatari/STORM_GAME_TRANSLATOR)
-[![Publisher](https://img.shields.io/badge/Publisher-STORM%20TEAM-10B981.svg?style=for-the-badge)](https://github.com/ReiKatari)
-[![Developer](https://img.shields.io/badge/Author-ReiKatari-F59E0B.svg?style=for-the-badge)](https://github.com/ReiKatari)
-[![Signed](https://img.shields.io/badge/Security-SHA256%20Signed-10B981.svg?style=for-the-badge)](https://github.com/ReiKatari)
+## **Ключевые возможности**
+- **Экранный захват выбранной области**: Наведение рамки захвата на диалоговые окна игр с автоматическим отслеживанием субтитров.
+- **Оверлей перевода поверх игры**: Отображение переведенного текста в прозрачном настраиваемом окне без прерывания геймплея.
+- **Поддержка локальных нейросетей**: Полностью автономный перевод без подключения к интернету через Ollama.
+- **Многоязычность**: Распознавание и перевод с японского, английского, китайского, корейского и других языков на русский.
 
-</div>
+## **Поддерживаемые платформы и эмуляторы**
+- **Операционные системы**: Windows 10, Windows 11 (x64)
 
----
+## **Установка и запуск**
+1. Скачайте инсталлятор из секции **Releases**.
+2. Запустите программу, настройте зону захвата экрана и выберите желаемый движок перевода.
 
-## 🌟 О проекте / Overview
+## **Безопасность и цифровые подписи**
+Бинарные файлы подписаны сертификатом **CN=STORM SOFT, O=STORM EDEN** (SHA-256 Authenticode).
 
-**STORM GAME TRANSLATOR** — компонент программного комплекса **STORM**, разработанный с упором на максимальную производительность, современный дизайн и надёжность.
+## **Авторы и лицензия**
+- **Автор проекта**: ReiKatari
+- **Лицензия**: MIT License
 
-* **Версия:** $ver
-* **Издатель:** STORM TEAM
-* **Ведущий разработчик:** ReiKatari
-* **Технологический стек:** $tech
-
----
-
-## 🚀 Установка / Installation
-
-Установка производится через единый инсталлятор **STORM INSTALLER**:
-
-1. Запустите файл STORM_STORM_GAME_TRANSLATOR_1.0.0_Setup.exe.
-2. Выберите режим:
-   * **Стандартная установка** — установка в C:\Program Files\STORM GAME TRANSLATOR с созданием ярлыков и регистрацией в системе.
-   * **Портативная версия** — распаковка в любую выбранную папку без изменения реестра.
-3. Опция автоматической регистрации доверенного сертификата STORM TEAM исключает предупреждения SmartScreen и Smart App Control.
-
----
-
-## 🛡️ Безопасность и Цифровая подпись / Code Signing
-
-Все исполняемые файлы и инсталляторы подписаны сертификатом **STORM TEAM** с использованием хэширования SHA-256 и RFC 3161 Timestamping.
-
-* Для ручной установки сертификата в хранилище доверенных корневых центров запустите:
-  Files\Разблокировать_И_Установить_Сертификат.bat от имени Администратора.
-
----
-
-## 📁 Структура репозитория / Structure
-
-* Assembling/ — скомпилированные релизные бинарные файлы и зависимости программы.
-* Files/ — инсталлятор, сертификат STORM_Certificate.cer и сервисные скрипты.
-* Sources/ — исходный код решения.
-
----
-
-## 👥 Авторы и Лицензия / Credits
-
-* **Разработчик:** [ReiKatari](https://github.com/ReiKatari)
-* **Издатель:** **STORM TEAM**
-* © 2026 STORM TEAM. Все права защищены.
+## **Благодарности**
+- **Команда Tesseract OCR** — за открытую систему оптического распознавания текста.
+- **Команда Ollama** — за удобную платформу локального запуска языковых моделей.
