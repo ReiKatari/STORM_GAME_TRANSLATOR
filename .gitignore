@@ -44,3 +44,13 @@ node_modules/
 
 .next/
 
+
+# Additional ignores
+.env
+*.apk
+*.zip
+node_modules/
+.next/
+dist/
+out/
+logs/
