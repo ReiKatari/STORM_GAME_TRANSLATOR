@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "profiles": {
+    "392cba10-58ea-4625-83b6-ab8ec8de5b73": {
+      "id": "392cba10-58ea-4625-83b6-ab8ec8de5b73",
+      "name": "rouges",
+      "file_path": "profile_392cba10-58ea-4625-83b6-ab8ec8de5b73.json.enc",
+      "avatar_path": "avatar_05a46612-976d-48b2-ab0c-2c60641cdfc8.png",
+      "created_at": "2026-04-27T23:39:45.352073Z",
+      "last_accessed": "2026-04-28T01:13:56.111470100Z",
+      "is_locked": false,
+      "failed_attempts": 0,
+      "last_failed_attempt": null,
+      "file_hash": "a67c7bbed10b9ae28e330309005da14c522e1962e41e9466824886a7e7c97bf1",
+      "has_credentials": false,
+      "settings_version": 1
+    }
+  },
+  "last_updated": "2026-04-28T01:13:56.133661800Z"
+}

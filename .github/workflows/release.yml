@@ -1,0 +1,359 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v1.0.5)'
+        required: true
+        type: string
+      create_release:
+        description: 'Create GitHub Release'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.inputs.version || github.ref }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+          prefix-key: v2-tauri-2.10-marker-fix
+          key: ${{ github.event.inputs.version }}
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+        env:
+          DATABASE_URL: "file:./dev.db"
+
+      - name: Force rebuild tauri-build (ensure __TAURI_BUNDLE_TYPE marker)
+        shell: bash
+        run: |
+          cd src-tauri
+          cargo clean -p tauri-build || true
+          cargo clean -p gamestringer || true
+
+      - name: Build Tauri App
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tauriScript: npx tauri
+          tagName: ${{ github.event.inputs.version }}
+          releaseName: 'GameStringer ${{ github.event.inputs.version }}'
+          updaterJsonKeepUniversal: true
+          releaseBody: |
+            ## Download
+            
+            ### Windows
+            - **GameStringer_x.x.x_x64-setup.exe** - Installer (consigliato)
+            - **GameStringer_x.x.x_x64_en-US.msi** - MSI Installer
+            - **GameStringer_x.x.x_x64-portable.zip** - Versione Portable (no installazione)
+            
+            ### macOS (Beta)
+            - **GameStringer_x.x.x_aarch64.dmg** - Apple Silicon (M1/M2/M3/M4)
+            - **GameStringer_x.x.x_x64.dmg** - Intel
+            
+            ### Linux (Beta)
+            - **GameStringer_x.x.x_amd64.deb** - Debian/Ubuntu
+            - **GameStringer_x.x.x_amd64.AppImage** - AppImage (universale)
+            - **GameStringer_x.x.x_amd64.rpm** - Fedora/openSUSE
+            
+            > ⚠️ **macOS/Linux Beta:** funziona tutto (traduzione AI, patching file, Unreal/Unity, glossari, TM).
+            > Alcune funzionalità Windows-only (memory injection, WinRT OCR) non sono disponibili.
+            > Segnala bug su [GitHub Issues](https://github.com/${{ github.repository }}/issues).
+            
+            ---
+            
+            📖 [Changelog completo](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)
+          releaseDraft: false
+          prerelease: false
+          includeDebug: false
+          args: --target x86_64-pc-windows-msvc
+
+      - name: Create Portable Version
+        shell: pwsh
+        run: |
+          $version = "${{ github.event.inputs.version }}".TrimStart('v')
+          
+          # Search for exe in possible paths
+          $candidates = @(
+            "src-tauri/target/x86_64-pc-windows-msvc/release/GameStringer.exe",
+            "src-tauri/target/release/GameStringer.exe"
+          )
+          $exePath = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+          $releaseDir = if ($exePath) { Split-Path $exePath } else { "" }
+          
+          if ($exePath) {
+            # Create portable folder
+            $portableDir = "GameStringer-$version-portable"
+            New-Item -ItemType Directory -Force -Path $portableDir
+            
+            # Copy executable
+            Copy-Item $exePath -Destination "$portableDir/GameStringer.exe"
+            
+            # Copy WebView2 loader if exists
+            $webview2 = Join-Path $releaseDir "WebView2Loader.dll"
+            if (Test-Path $webview2) {
+              Copy-Item $webview2 -Destination "$portableDir/"
+            }
+            
+            # Create portable marker file
+            "GameStringer Portable Version $version" | Out-File -FilePath "$portableDir/PORTABLE"
+            
+            # Create README for portable
+            $readme = @(
+              "# GameStringer Portable",
+              "",
+              "Versione: $version",
+              "",
+              "## Istruzioni",
+              "1. Estrai questa cartella dove preferisci",
+              "2. Esegui GameStringer.exe",
+              "3. I dati verranno salvati nella sottocartella 'data'",
+              "",
+              "## Requisiti",
+              "- Windows 10/11 (64-bit)",
+              "- WebView2 Runtime (installato automaticamente su Windows 11)",
+              "",
+              "## Note",
+              "Questa e' la versione portable, non richiede installazione.",
+              "Per la versione con installer, scarica il file .exe o .msi."
+            ) -join "`n"
+            $readme | Out-File -FilePath "$portableDir/README.txt" -Encoding UTF8
+            
+            # Create ZIP
+            Compress-Archive -Path "$portableDir/*" -DestinationPath "GameStringer_${version}_x64-portable.zip" -Force
+            
+            Write-Host "Created portable: GameStringer_${version}_x64-portable.zip"
+          } else {
+            Write-Host "Executable not found at $exePath"
+            exit 1
+          }
+
+      - name: Upload Portable to Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.event.inputs.version }}
+          files: GameStringer_*_x64-portable.zip
+          draft: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
+  build-linux:
+    runs-on: ubuntu-22.04
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.inputs.version || github.ref }}
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libssl-dev \
+            libsoup-3.0-dev \
+            libjavascriptcoregtk-4.1-dev \
+            build-essential \
+            curl \
+            wget \
+            file
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+          prefix-key: v2-tauri-2.10-marker-fix
+          key: ${{ github.event.inputs.version }}
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+        env:
+          DATABASE_URL: "file:./dev.db"
+
+      - name: Force rebuild tauri-build (ensure __TAURI_BUNDLE_TYPE marker)
+        run: |
+          cd src-tauri
+          cargo clean -p tauri-build || true
+          cargo clean -p gamestringer || true
+
+      - name: Generate icons for Linux bundler
+        run: |
+          cd src-tauri/icons
+          # Ensure all required PNG sizes exist
+          if [ ! -f 32x32.png ] && [ -f png/icon-32.png ]; then cp png/icon-32.png 32x32.png; fi
+          if [ ! -f 128x128.png ] && [ -f png/icon-256.png ]; then
+            npx --yes sharp-cli resize 128 128 --input png/icon-256.png --output 128x128.png
+          fi
+          if [ ! -f 128x128@2x.png ] && [ -f png/icon-256.png ]; then cp png/icon-256.png 128x128@2x.png; fi
+          if [ ! -f icon.png ] && [ -f png/icon-256.png ]; then cp png/icon-256.png icon.png; fi
+          # Create minimal icns from png (Tauri needs it even on Linux for deb)
+          if [ ! -f icon.icns ] && [ -f png/icon-256.png ]; then
+            mkdir -p tmp.iconset
+            cp png/icon-256.png tmp.iconset/icon_256x256.png
+            cp png/icon-256.png tmp.iconset/icon_128x128@2x.png
+            if [ -f png/icon-48.png ]; then cp png/icon-48.png tmp.iconset/icon_32x32@2x.png; fi
+            if [ -f png/icon-32.png ]; then cp png/icon-32.png tmp.iconset/icon_32x32.png; fi
+            if [ -f png/icon-16.png ]; then cp png/icon-16.png tmp.iconset/icon_16x16.png; fi
+            # iconutil only works on macOS, use png2icns alternative
+            npx --yes @aspect-build/icns-gen --input tmp.iconset/icon_256x256.png --output icon.icns 2>/dev/null || cp png/icon-256.png icon.icns
+            rm -rf tmp.iconset
+          fi
+          ls -la
+
+      - name: Build Tauri App (Linux)
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tauriScript: npx tauri
+          updaterJsonKeepUniversal: true
+          tagName: ${{ github.event.inputs.version }}
+          releaseName: 'GameStringer ${{ github.event.inputs.version }}'
+          releaseDraft: false
+          prerelease: false
+          includeDebug: false
+          args: --bundles deb,appimage,rpm
+
+
+  build-macos:
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.inputs.version || github.ref }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+          prefix-key: v2-tauri-2.10-marker-fix
+          key: ${{ github.event.inputs.version }}
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+        env:
+          DATABASE_URL: "file:./dev.db"
+
+      - name: Force rebuild tauri-build (ensure __TAURI_BUNDLE_TYPE marker)
+        run: |
+          cd src-tauri
+          cargo clean -p tauri-build || true
+          cargo clean -p gamestringer || true
+
+      - name: Generate icons for macOS bundler
+        run: |
+          cd src-tauri/icons
+          # Ensure PNG sizes exist
+          if [ ! -f 32x32.png ] && [ -f png/icon-32.png ]; then cp png/icon-32.png 32x32.png; fi
+          if [ ! -f 128x128.png ] && [ -f png/icon-256.png ]; then
+            npx --yes sharp-cli resize 128 128 --input png/icon-256.png --output 128x128.png
+          fi
+          if [ ! -f 128x128@2x.png ] && [ -f png/icon-256.png ]; then cp png/icon-256.png 128x128@2x.png; fi
+          if [ ! -f icon.png ] && [ -f png/icon-256.png ]; then cp png/icon-256.png icon.png; fi
+          # Generate icns using macOS native iconutil
+          if [ ! -f icon.icns ] && [ -f png/icon-256.png ]; then
+            mkdir -p GameStringer.iconset
+            sips -z 16 16 png/icon-256.png --out GameStringer.iconset/icon_16x16.png 2>/dev/null || cp png/icon-16.png GameStringer.iconset/icon_16x16.png
+            sips -z 32 32 png/icon-256.png --out GameStringer.iconset/icon_16x16@2x.png 2>/dev/null || cp png/icon-32.png GameStringer.iconset/icon_16x16@2x.png
+            sips -z 32 32 png/icon-256.png --out GameStringer.iconset/icon_32x32.png 2>/dev/null || cp png/icon-32.png GameStringer.iconset/icon_32x32.png
+            sips -z 64 64 png/icon-256.png --out GameStringer.iconset/icon_32x32@2x.png 2>/dev/null || true
+            sips -z 128 128 png/icon-256.png --out GameStringer.iconset/icon_128x128.png 2>/dev/null || true
+            sips -z 256 256 png/icon-256.png --out GameStringer.iconset/icon_128x128@2x.png 2>/dev/null || cp png/icon-256.png GameStringer.iconset/icon_128x128@2x.png
+            sips -z 256 256 png/icon-256.png --out GameStringer.iconset/icon_256x256.png 2>/dev/null || cp png/icon-256.png GameStringer.iconset/icon_256x256.png
+            cp png/icon-256.png GameStringer.iconset/icon_256x256@2x.png
+            iconutil -c icns GameStringer.iconset -o icon.icns
+            rm -rf GameStringer.iconset
+          fi
+          ls -la
+
+      - name: Build Tauri App (macOS Apple Silicon)
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tauriScript: npx tauri
+          updaterJsonKeepUniversal: true
+          tagName: ${{ github.event.inputs.version }}
+          releaseName: 'GameStringer ${{ github.event.inputs.version }}'
+          releaseDraft: false
+          prerelease: false
+          includeDebug: false
+          args: --target aarch64-apple-darwin
+
+      - name: Build Tauri App (macOS Intel)
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tauriScript: npx tauri
+          updaterJsonKeepUniversal: true
+          tagName: ${{ github.event.inputs.version }}
+          releaseName: 'GameStringer ${{ github.event.inputs.version }}'
+          releaseDraft: false
+          prerelease: false
+          includeDebug: false
+          args: --target x86_64-apple-darwin
+
+

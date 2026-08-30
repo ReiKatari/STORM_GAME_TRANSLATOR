@@ -1,0 +1,71 @@
+const fs = require('fs');
+const path = require('path');
+
+const ruPath = path.join(__dirname, '../lib/i18n/locales/ru.json');
+const ru = JSON.parse(fs.readFileSync(ruPath, 'utf8'));
+
+ru.nav = ru.nav || {};
+ru.nav.patcher = 'Патчер';
+ru.nav.patcherEngine = 'Движок патчера';
+ru.nav.videoExtractor = 'Экстрактор видео';
+ru.nav.lipSync = 'Синхронизация губ';
+ru.nav.overlay = 'Оверлей';
+ru.nav.community = 'Сообщество';
+ru.nav.stores = 'Магазины';
+ru.nav.settings = 'Настройки';
+ru.nav.guide = 'Руководство';
+ru.nav.translation = 'Перевод';
+ru.nav.translate = 'ИИ-переводчик';
+ru.nav.ocrTranslator = 'OCR-переводчик';
+ru.nav.voice = 'Голосовой перевод';
+ru.nav.batch = 'Пакетный перевод';
+ru.nav.offlineTranslator = 'Офлайн-перевод';
+ru.nav.editor = 'Редактор';
+
+ru.common = ru.common || {};
+ru.common.refresh = 'Обновить';
+ru.common.scan = 'Сканировать';
+ru.common.installed = 'Установлено';
+ru.common.translate = 'Перевести';
+ru.common.translating = 'Перевод...';
+ru.common.copied = 'Скопировано в буфер обмена';
+ru.common.games = 'Игры';
+ru.common.closeApp = 'Закрыть STORM GAME TRANSLATOR';
+ru.common.closeAppDescription = 'Вы действительно хотите выйти из программы?';
+ru.common.cancel = 'Отмена';
+ru.common.confirm = 'Подтвердить';
+ru.common.save = 'Сохранить';
+
+ru.libraryPage = ru.libraryPage || {};
+ru.libraryPage.ptRank = 'Рейтинг P.T.';
+ru.libraryPage.dryRun = 'Тест';
+ru.libraryPage.namesDb = 'База имен';
+ru.libraryPage.emptyLibrary = 'Ваша библиотека пуста.';
+ru.libraryPage.emptyLibraryHint = 'Нажмите кнопку «Обновить», чтобы добавить игры в библиотеку.';
+ru.libraryPage.noGamesFound = 'Игры не найдены по запросу';
+ru.libraryPage.activeFiltersWarning = 'Активные фильтры могут скрывать некоторые игры.';
+ru.libraryPage.gamesInLibraryHint = 'игр в библиотеке. Попробуйте сбросить фильтры.';
+ru.libraryPage.searchPlaceholder = 'Поиск по названию...';
+ru.libraryPage.shared = 'Family Sharing';
+ru.libraryPage.rescanTooltip = 'Сканировать все установленные игры + Family Sharing';
+ru.libraryPage.ptRankTooltip = 'Рейтинг P.T. — сканировать игры по сложности перевода';
+ru.libraryPage.dryRunTooltip = 'Тестовый запуск — проверка конвейера переводов';
+
+ru.aiTranslation = ru.aiTranslation || {};
+ru.aiTranslation.enterText = 'Введите текст для перевода...';
+ru.aiTranslation.characterPlaceholder = 'Имя персонажа';
+ru.aiTranslation.gameContext = 'Контекст игры';
+ru.aiTranslation.gameTitle = 'Название игры';
+ru.aiTranslation.gameTitlePlaceholder = 'например, Ведьмак 3';
+ru.aiTranslation.genre = 'Жанр';
+ru.aiTranslation.tone = 'Тон диалогов';
+ru.aiTranslation.setting = 'Сеттинг';
+ru.aiTranslation.settingPlaceholder = 'например, темное фэнтези';
+ru.aiTranslation.glossary = 'Глоссарий';
+ru.aiTranslation.termPlaceholder = 'Термин EN';
+ru.aiTranslation.translationPlaceholder = 'Перевод';
+ru.aiTranslation.alternative = 'Альтернативы';
+ru.aiTranslation.translation = 'Перевод';
+
+fs.writeFileSync(ruPath, JSON.stringify(ru, null, 2), 'utf8');
+console.log('✅ ru.json updated successfully with all navigation, library, and AI translation strings!');

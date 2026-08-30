@@ -1,0 +1,146 @@
+import type { Config } from 'tailwindcss';
+
+const config: Config = {
+  darkMode: ['class'],
+  content: [
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  safelist: [
+    'bg-orange-400',
+    'bg-orange-500',
+    'bg-orange-500/10',
+    'bg-orange-500/20',
+    'text-orange-400',
+    'text-orange-300',
+    'text-orange-400/60',
+    'border-orange-500/30',
+    'hover:text-orange-300',
+    'hover:bg-orange-500/20',
+    'group-hover:text-orange-300',
+    'shadow-orange-500/20',
+    // Guide page category colors
+    'text-sky-400',
+    'bg-sky-500/20',
+    'text-emerald-400',
+    'bg-emerald-500/20',
+    'text-purple-400',
+    'bg-purple-500/20',
+  ],
+  theme: {
+    extend: {
+      fontSize: {
+        'micro': ['0.5625rem', { lineHeight: '0.75rem' }],   // 9px  — replaces text-micro
+        '2xs':   ['0.625rem',  { lineHeight: '0.875rem' }],  // 10px — replaces text-2xs
+      },
+      backgroundImage: {
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'gradient-conic':
+          'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
+      },
+      borderRadius: {
+        lg: 'var(--radius)',
+        md: 'calc(var(--radius) - 2px)',
+        sm: 'calc(var(--radius) - 4px)',
+      },
+      colors: {
+        background: 'hsl(var(--background))',
+        foreground: 'hsl(var(--foreground))',
+        card: {
+          DEFAULT: 'hsl(var(--card))',
+          foreground: 'hsl(var(--card-foreground))',
+        },
+        popover: {
+          DEFAULT: 'hsl(var(--popover))',
+          foreground: 'hsl(var(--popover-foreground))',
+        },
+        primary: {
+          DEFAULT: 'hsl(var(--primary))',
+          foreground: 'hsl(var(--primary-foreground))',
+        },
+        secondary: {
+          DEFAULT: 'hsl(var(--secondary))',
+          foreground: 'hsl(var(--secondary-foreground))',
+        },
+        muted: {
+          DEFAULT: 'hsl(var(--muted))',
+          foreground: 'hsl(var(--muted-foreground))',
+        },
+        accent: {
+          DEFAULT: 'hsl(var(--accent))',
+          foreground: 'hsl(var(--accent-foreground))',
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
+        },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
+        border: 'hsl(var(--border))',
+        input: 'hsl(var(--input))',
+        ring: 'hsl(var(--ring))',
+        chart: {
+          '1': 'hsl(var(--chart-1))',
+          '2': 'hsl(var(--chart-2))',
+          '3': 'hsl(var(--chart-3))',
+          '4': 'hsl(var(--chart-4))',
+          '5': 'hsl(var(--chart-5))',
+        },
+      },
+      keyframes: {
+        'accordion-down': {
+          from: {
+            height: '0',
+          },
+          to: {
+            height: 'var(--radix-accordion-content-height)',
+          },
+        },
+        'accordion-up': {
+          from: {
+            height: 'var(--radix-accordion-content-height)',
+          },
+          to: {
+            height: '0',
+          },
+        },
+        'gradient-shift': {
+          '0%, 100%': {
+            'background-position': '0% 50%',
+          },
+          '50%': {
+            'background-position': '100% 50%',
+          },
+        },
+        'shimmer': {
+          '0%, 100%': { 
+            'background-size': '200% 200%',
+            'background-position': '50% 50%'
+          },
+          '50%': { 
+            'background-size': '300% 300%',
+            'background-position': '50% 50%'
+          },
+        },
+        'marquee': {
+          '0%': { transform: 'translateX(0%)' },
+          '100%': { transform: 'translateX(-50%)' },
+        },
+      },
+      animation: {
+        'accordion-down': 'accordion-down 0.2s ease-out',
+        'accordion-up': 'accordion-up 0.2s ease-out',
+        'spin-slow': 'spin 3s linear infinite',
+        'gradient-shift': 'gradient-shift 4s ease infinite',
+        'shimmer': 'shimmer 12s ease-in-out infinite',
+        'marquee': 'marquee 8s linear infinite',
+      },
+    },
+  },
+  plugins: [require('tailwindcss-animate')],
+};
+export default config;
+

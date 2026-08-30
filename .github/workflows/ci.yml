@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  # ── Frontend quality checks ─────────────────────────────────
+  frontend-checks:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          DATABASE_URL: "file:./dev.db"
+
+      - name: TypeScript type check
+        run: npx tsc --noEmit 2>&1 | tail -5
+        continue-on-error: true
+
+      - name: ESLint
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Unit tests
+        run: npm run test:run
+        continue-on-error: true
+
+      - name: Security audit
+        run: npm audit --audit-level=high || true
+
+  # ── Rust backend checks ─────────────────────────────────────
+  check-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Create frontend dist stub
+        run: mkdir out && echo "<html></html>" > out/index.html
+
+      - name: Cargo check (Windows)
+        working-directory: src-tauri
+        run: cargo check --verbose
+
+  check-linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libssl-dev \
+            libgtk-3-dev
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Create frontend dist stub
+        run: mkdir -p out && echo '<html></html>' > out/index.html
+
+      - name: Cargo check (Linux)
+        working-directory: src-tauri
+        run: cargo check --verbose

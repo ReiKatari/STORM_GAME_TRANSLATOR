@@ -1,0 +1,140 @@
+{
+  "app": {
+    "name": "STORM GAME TRANSLATOR",
+    "tagline": "Game Translation Made Easy",
+    "version": "Version"
+  },
+  "nav": {
+    "home": "Home",
+    "projects": "Projects",
+    "translation": "Translation",
+    "settings": "Settings",
+    "help": "Help",
+    "about": "About"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "import": "Import",
+    "export": "Export",
+    "translate": "Translate",
+    "apply": "Apply",
+    "reset": "Reset",
+    "search": "Search",
+    "filter": "Filter",
+    "close": "Close",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "finish": "Finish"
+  },
+  "translation": {
+    "title": "Translation",
+    "sourceLanguage": "Source Language",
+    "targetLanguage": "Target Language",
+    "provider": "AI Provider",
+    "apiKey": "API Key",
+    "startTranslation": "Start Translation",
+    "stopTranslation": "Stop Translation",
+    "progress": "Progress",
+    "estimated": "Estimated",
+    "completed": "Completed",
+    "failed": "Failed",
+    "remaining": "Remaining",
+    "costEstimate": "Cost Estimate",
+    "batchSize": "Batch Size",
+    "rateLimit": "Rate Limit",
+    "retrying": "Retrying..."
+  },
+  "files": {
+    "title": "Files",
+    "open": "Open File",
+    "openFolder": "Open Folder",
+    "saveAs": "Save As",
+    "recentFiles": "Recent Files",
+    "noFiles": "No files selected",
+    "dragDrop": "Drag and drop files here",
+    "supported": "Supported Formats"
+  },
+  "engines": {
+    "unity": "Unity",
+    "unreal": "Unreal Engine",
+    "rpgmaker": "RPG Maker",
+    "renpy": "Ren'Py",
+    "godot": "Godot",
+    "gamemaker": "GameMaker",
+    "danganronpa": "Danganronpa"
+  },
+  "settings": {
+    "title": "Settings",
+    "general": "General",
+    "appearance": "Appearance",
+    "language": "Language",
+    "theme": "Theme",
+    "darkMode": "Dark Mode",
+    "lightMode": "Light Mode",
+    "system": "System",
+    "apiKeys": "API Keys",
+    "advanced": "Advanced",
+    "backup": "Backup",
+    "restore": "Restore"
+  },
+  "messages": {
+    "success": "Success",
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Info",
+    "loading": "Loading...",
+    "saving": "Saving...",
+    "translating": "Translating...",
+    "completed": "Completed!",
+    "failed": "Operation failed",
+    "noResults": "No results found",
+    "confirmDelete": "Are you sure you want to delete this?"
+  },
+  "chat": {
+    "title": "Community Chat",
+    "rooms": "Rooms",
+    "online": "Online",
+    "offline": "Offline",
+    "sendMessage": "Send Message",
+    "typePlaceholder": "Type a message...",
+    "noMessages": "No messages yet. Be the first to say hello!",
+    "createRoom": "Create Room",
+    "roomName": "Room Name",
+    "roomDescription": "Description",
+    "roomType": "Type",
+    "general": "General",
+    "translations": "Translations",
+    "feedback": "Feedback & Bug",
+    "announcement": "Announcements",
+    "onlineUsers": "Online Users",
+    "autoLogin": "Auto-connected via STORM GAME TRANSLATOR profile",
+    "notAuthenticated": "Log in to your STORM GAME TRANSLATOR profile to access chat",
+    "retry": "Retry Connection",
+    "editMessage": "Edit Message",
+    "deleteMessage": "Delete Message",
+    "replyTo": "Reply to"
+  },
+  "danganronpa": {
+    "title": "Danganronpa Auto-Translator",
+    "detectGames": "Detect Games",
+    "extractPak": "Extract PAK",
+    "selectGame": "Select Game",
+    "games": {
+      "dr1": "Danganronpa: Trigger Happy Havoc",
+      "dr2": "Danganronpa 2: Goodbye Despair",
+      "drae": "Danganronpa Another Episode",
+      "drv3": "Danganronpa V3: Killing Harmony"
+    },
+    "pakTypes": {
+      "text": "Text PAK",
+      "script": "Script LIN",
+      "texture": "Texture PAK",
+      "font": "Font PAK"
+    }
+  }
+}

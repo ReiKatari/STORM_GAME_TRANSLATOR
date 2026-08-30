@@ -1,0 +1,618 @@
+﻿# GameStringer - Complete Guide
+
+## Table of Contents
+
+1. [Initial Setup](#phase-1-initial-setup)
+2. [Store Connection](#phase-2-store-connection)
+3. [Game Library](#phase-3-game-library)
+4. [Translate Game (Auto-Translate)](#phase-4-translate-game)
+5. [Patcher Engine](#phase-5-patcher-engine)
+6. [Unity CSV Translator](#phase-6-unity-csv-translator)
+7. [BepInEx + XUnity](#phase-7-bepinex--xunity)
+8. [AI Pipeline Multi-Agent](#phase-8-ai-pipeline)
+9. [AI Translator](#phase-9-ai-translator)
+10. [OCR Translator & Multi-Engine](#phase-10-ocr-translator)
+11. [Voice Translator](#phase-11-voice-translator)
+12. [Batch & Offline Translation](#phase-12-batch--offline)
+13. [Danganronpa Patcher](#phase-13-danganronpa-patcher)
+14. [Prediction Tool & QA Check](#phase-14-prediction-tool--qa-check)
+15. [Glossary, TM & Adaptive MT](#phase-15-glossary-tm--adaptive-mt)
+16. [Advanced Tools](#phase-16-advanced-tools)
+17. [Security & Recovery Key](#phase-17-security)
+18. [Troubleshooting](#phase-18-troubleshooting)
+19. [Community Chat (Real-Time)](#phase-19-community-chat) *(NEW v1.5.0)*
+
+---
+
+## PHASE 1: INITIAL SETUP
+
+### First Launch
+
+Launch GameStringer. On first run, the profile creation screen appears.
+
+### Profile Creation
+
+- **Name**: choose a name (e.g. "Mario Gaming")
+- **Avatar**: select a color/gradient
+- **Password**: minimum 4 characters
+- Click **"Create Profile"** — automatic authentication
+
+### Interface
+
+- **Sidebar** (left): navigation between sections
+- **Dashboard** (center): game overview, stats, AI Engine widget
+- **Ctrl+K**: global quick search to access any page
+
+---
+
+## PHASE 2: STORE CONNECTION
+
+### Supported Stores
+
+Steam, Epic Games, GOG, Ubisoft Connect, Origin/EA, Battle.net, Itch.io, Rockstar, Amazon Games.
+
+### Steam Configuration (Priority)
+
+1. Get API Key from https://steamcommunity.com/dev/apikey
+2. Find your Steam ID64 from https://steamid.io/
+3. In GS: **Settings** → enter API Key and Steam ID
+4. Steam profile must be **Public**
+
+GS also detects games from **Steam Family Sharing**.
+
+---
+
+## PHASE 3: GAME LIBRARY
+
+- Sidebar → **"Library"** or Dashboard → **"Update Library"**
+- Loading takes 1-2 minutes for hundreds of games
+- Clicking a game: details, detected engine, path, **"Translate Game"** button
+
+---
+
+## PHASE 4: TRANSLATE GAME
+
+Sidebar → **"Translate Game"** (Auto-Translate). The heart of GameStringer.
+
+### Workflow
+
+1. **Select game** from library or manual path
+2. **Scan**: detects engine (Unity, Unreal, Godot, RPG Maker, Ren'Py, etc.) and translatable files
+3. **Smart Auto-Select**: recommends the best method for the detected engine
+4. **AI Translation**: strings translated with the configured AI engine
+5. **Review**: review, edit, approve
+6. **Apply Patch**: automatic backup + application
+
+### Smart Auto-Select for Unity
+
+| Type | Recommended Method | Alternative |
+|------|-------------------|-------------|
+| Unity Mono (no BepInEx) | Unity CSV Translator | BepInEx + XUnity |
+| Unity Mono (BepInEx present) | Unity CSV Translator | AI translate captured strings |
+| Unity IL2CPP | Unity CSV Translator | None (BepInEx incompatible) |
+
+### Detected Engines
+
+Unity (Mono/IL2CPP), Unreal Engine, Godot, RPG Maker, Ren'Py, Source Engine, CryEngine, RE Engine, Frostbite, id Tech, Creation Engine, Construct, AGS, Defold, Love2D.
+
+---
+
+## PHASE 5: PATCHER ENGINE
+
+Sidebar → **Patcher** → **Patcher Engine**. 5 specialized patchers:
+
+- **Unity**: BepInEx + XUnity AutoTranslator for Mono
+- **Unreal Engine**: .locres file translation (UE4/UE5)
+- **Godot**: extract/translate/re-pack .pck files (Godot 3/4)
+- **RPG Maker**: JSON translation for MV/MZ (dialogues, items, skills)
+- **Ren'Py**: .rpy file translation (visual novels)
+
+---
+
+## PHASE 6: UNITY CSV TRANSLATOR
+
+The **best method** for Unity games (both Mono and IL2CPP).
+
+### How It Works
+
+1. Scans Unity assets (resources.assets, etc.)
+2. Extracts CSV localization tables
+3. Translates with AI (Ollama or cloud)
+4. Injects translations with **Resize Injection** (zero truncation)
+
+### Advantages
+
+- Works with **all** Unity games (Mono and IL2CPP)
+- Zero truncation thanks to resize
+- Complete coverage (all strings, not just on-screen ones)
+- No external dependencies
+- Automatic backup (.backup) and restore
+
+---
+
+## PHASE 7: BEPINEX + XUNITY
+
+For **Unity Mono** games — live translation during gameplay.
+
+1. GS detects Unity game and finds the exe
+2. Click **"Install BepInEx + XUnity"**
+3. Launch the game — XUnity captures on-screen strings
+4. Close and return to GS — translate captured strings with AI
+
+**Limitation**: does not work with IL2CPP (causes crash). Use Unity CSV Translator for IL2CPP.
+
+---
+
+## PHASE 8: AI PIPELINE
+
+Search **"AI Pipeline"** with Ctrl+K. Multi-step system for high quality.
+
+### 6 Steps
+
+Harvest → Translate → QA Check → Auto-Fix → Review → Score
+
+### 3 Modes
+
+- **Quick**: Translate + QA (fast)
+- **Balanced**: + Auto-Fix (recommended)
+- **Max Quality**: all 6 steps, threshold 75, max 3 attempts
+
+### Multi-Agent
+
+Assign different models per step (e.g. qwen for Translate, gemma for Review). 4 presets: Default, Speed, Max Quality, Diversified.
+
+### Benchmark
+
+Execution history with score, duration, ms/string. Preset comparison.
+
+---
+
+## PHASE 9: AI TRANSLATOR
+
+Sidebar → **Translation** → **AI Translator**.
+
+### Providers
+
+- **Ollama** (local, free), **OpenAI/GPT-4**, **Claude**, **Gemini**, **DeepL**, **Lingva**
+
+### Features
+
+- Single or batch translation
+- Auto-detect source language
+- Style: natural, literal, gaming
+- Placeholder preservation ({0}, %s, \n)
+- Glossary + Translation Memory + Adaptive MT integration
+
+---
+
+## PHASE 10: OCR TRANSLATOR
+
+Sidebar → **Translation** → **OCR Translator**.
+
+Translates text from screen in real time:
+- Manual screenshot or selected area
+- Continuous Live OCR
+- Global hotkey: **Ctrl+Shift+T**
+
+### OCR Multi-Engine
+
+4 engines: **OneOCR** (Win11), **PaddleOCR** (CJK), **RapidOCR** (ONNX), **Tesseract** (fallback).
+
+- Automatic engine probe
+- Automatic fallback chain
+- Parallel comparison mode
+
+---
+
+## PHASE 11: VOICE TRANSLATOR
+
+Sidebar → **Translation** → **Voice Translator**.
+
+- In-game voice recognition
+- Audio → translated text
+- Real-time subtitle overlay
+
+---
+
+## PHASE 12: BATCH & OFFLINE
+
+### Batch
+
+Sidebar → **Translation** → **Batch**. Translates entire file folders:
+- Supports .txt, .json, .csv, .po, .xml, .rpy, .ini
+- Real-time progress per file
+- AI pipeline option for maximum quality
+
+### Offline (Ollama)
+
+Sidebar → **Translation** → **Offline Translator**.
+- Fully local translation with Ollama
+- No internet connection needed
+- Total privacy — data never leaves your PC
+
+---
+
+## PHASE 13: DANGANRONPA PATCHER
+
+Search **"Danganronpa"** with Ctrl+K.
+
+### Features
+
+1. **Apply Patch tab**: select Steam game, view WAD files, apply patch
+2. **WAD Extractor tab**: extract, search, filter and translate 35,865 strings
+3. **AI Batch Translation**: select strings → translate with AI → export JSON
+4. **Distributable .zip export**: patched WAD + auto-installer + instructions
+5. In-game: Settings → Control Hints → "Keyboard and Mouse"
+
+---
+
+## PHASE 14: PREDICTION TOOL & QA CHECK
+
+### Prediction Tool
+
+Search with Ctrl+K. Analyzes a game before translation:
+- Estimated string and word count
+- Estimated cost per provider (DeepL, OpenAI, local)
+- Estimated time per method
+- Recommended translation chains
+
+### QA Check
+
+Search with Ctrl+K. Post-translation quality control:
+- Placeholder verification
+- Number and value checks
+- String length verification
+- Format and punctuation checks
+- Per-string quality score
+
+---
+
+## PHASE 15: GLOSSARY, TM & ADAPTIVE MT
+
+### Glossary
+
+Search with Ctrl+K. Custom terminology per game:
+- Add terms (e.g. "quest" → "missione")
+- Categories: gameplay, UI, characters, lore
+- Automatically integrated in AI translation
+
+### Smart Glossary
+
+Automatically generates glossary from game file analysis.
+
+### Translation Memory
+
+Dashboard → "TM Entries" widget. Translation memory:
+- Automatically saves every translated pair
+- Reuses previous translations
+- Rust backend for performance
+
+### Adaptive MT
+
+Learns from your corrections:
+- Saves: original → AI → human correction
+- Finds similar corrections with trigram/word similarity
+- Injects few-shot examples into AI prompt
+- Improves over time
+
+---
+
+## PHASE 16: ADVANCED TOOLS
+
+### Context Harvester
+
+Scans game files and extracts context for AI translation.
+
+### Translation Editor
+
+Advanced editor for manual string review with filters and search.
+
+### Subtitle Overlay
+
+In-game overlay for translated subtitles in real time.
+
+### ROM Patcher
+
+Apply and create IPS/BPS patches for retro translations (SNES, GBA, etc.).
+
+### Export Formats
+
+Export translations to: PO, XLIFF, CSV, JSON, TMX.
+
+### Community Hub
+
+Share translations, vote, comment, download community translations.
+
+---
+
+## PHASE 17: SECURITY
+
+### Recovery Key
+
+On profile creation, a **Recovery Key** is generated (12 mnemonic words).
+- Copy or download as .txt
+- **Save in a secure place!**
+
+### Password Recovery
+
+Login screen → **"Forgot password?"** → enter the 12 words → new password.
+
+---
+
+## PHASE 18: TROUBLESHOOTING
+
+### Game Not Found
+
+- Verify it's installed and Steam/Epic is open
+- Update library and restart GS
+
+### Translation Not Applied
+
+- Fully restart the game
+- Check file write permissions
+- Run GS as administrator
+
+### AI Not Responding
+
+- Check internet connection (for cloud providers)
+- For Ollama: verify it's running (green dot in sidebar)
+- Try a different engine
+
+### Game Crashed After Patch
+
+- Click **"Restore Backup"** in the tool used
+- Verify file integrity on Steam (right-click → Properties → Local Files)
+
+### Unity IL2CPP + BepInEx = Crash
+
+- GS now automatically blocks BepInEx for IL2CPP
+- Use Unity CSV Translator instead
+
+### Ollama Slow or Not Responding
+
+- Sidebar: green dot = online, red = offline
+- Ollama Manager → check installed models
+- Recommended: 7B model for speed, 13B+ for quality
+
+---
+
+## PHASE 19: COMMUNITY CHAT
+
+*(NEW v1.5.0)*
+
+Real-time community chat integrated into the Community Hub, powered by Supabase Realtime.
+
+### How to Access
+
+1. Go to **Community Hub** from the sidebar
+2. Click the **Chat** tab or the chat icon in the bottom-right corner
+3. If you're logged into your GameStringer profile, you're **automatically connected** — no extra login needed!
+
+### Default Rooms
+
+- **General**: free chat for the GameStringer community
+- **Translations**: discuss translations, ask for help, share progress
+- **Feedback & Bug**: report bugs and suggest improvements
+- **Announcements**: official news and updates
+
+### Features
+
+- **Real-time messages**: messages appear instantly via Supabase Realtime
+- **Online presence**: see who's online in real-time
+- **Reply to messages**: click a message to reply in thread
+- **Edit/Delete**: edit or delete your own messages
+- **Create custom rooms**: create dedicated rooms for specific projects or games
+- **Auto-login**: automatic bridge syncs your GS profile with Supabase Auth
+
+### Requirements
+
+- Active GameStringer profile (logged in)
+- Active internet connection
+- Supabase backend configured (for self-hosting)
+
+## What's New v1.9.0
+
+### Bethesda Engine Patcher
+- **Supported games**: Skyrim LE/SE/AE, Fallout 3/NV/4, Oblivion, Starfield
+- **Archive formats**: BSA v103/v104/v105 and BA2 (GNRL + DX10)
+- **Plugins**: ESP/ESM parsing with translatable record extraction
+- **Localized strings**: STRINGS, DLSTRINGS, ILSTRINGS
+- **Workflow**: extract → AI translate → repack with automatic backup
+
+### CRI Middleware Patcher
+- **Supported games**: Persona 5 Royal, Yakuza, Tales of, Dragon Ball and every CRI title
+- **Archives**: CPK with CRILAYLA decompression
+- **Message formats**: MSG, BMD, FTD
+- **Workflow**: unpack CPK → decode messages → translate → repack
+
+### Unity Localization Package
+- Pipeline for the official Unity Localization package (Unity 2021.3+)
+- StringTable + SharedTableData, Addressables, Smart Strings support
+- Dedicated validator for placeholders and plural forms
+
+### Universal PO Export
+- gettext PO export with full metadata from every patcher
+- Compatible with Poedit, Weblate, Crowdin and any CAT tool
+
+### Accessibility WCAG 2.1 AA
+- aria-label on icon buttons, semantic headings, focus-visible
+- "Skip to content" skip link, prefers-reduced-motion
+- Windows High Contrast compatibility (forced-colors)
+
+### Design System and OCR
+- Card variants via cva, Button xs/icon-sm, text-micro/text-2xs utilities
+- Real Tauri Tesseract backend replacing the OCR stub
+- Fix: Windows console flash loop when the app runs in tray
+
+---
+
+## What's New v1.8.1
+
+### Live Translation Overlay
+- Go to **/live-translate** page or press **Ctrl+Alt+O**
+- Select source/target language and AI provider
+- Click **Start** — overlay appears on top of the game
+- Text is captured via OCR every 2 seconds
+- Translations appear as transparent overlay boxes
+- Diff detection skips unchanged text (saves API calls)
+
+### Hub Marketplace
+- Go to **Community Hub** to browse translation packs
+- **1-click install**: download → validate → import
+- Rate and review community packs
+- Publish your own translations as **.gspack** files
+- User profiles with reputation and badges
+
+### Translation Memory Network
+- Enable in **Settings → TM Network**
+- Opt-in: your high-quality translations contribute to global pool
+- Privacy-first: source text hashed, no user data shared
+- Next user translating same game gets pre-filled suggestions
+- Auto-integrated into translation pipeline
+
+### AI Dubbing Pipeline
+- Go to **/dubbing** page
+- Select game folder and configure languages/voice
+- 7-step pipeline: scan → transcribe → translate → synthesize → patch → lip sync → subtitles
+- Duration matching keeps translated audio same length as original
+- Character voice profiles with 16 archetypes
+
+### Plugin System
+- Community can create new game engine patchers in JavaScript
+- No Rust compilation needed
+- Template generator creates complete plugin scaffold
+- Plugins distributed as **.gsplugin** packages
+
+---
+
+## What's New v1.9.0
+
+### Community Hub UI Improvements
+- **Redesigned Community Hub**: cleaner, more consistent design without excessive gradients and decorative blobs
+- **Compact KPI Cards**: smaller, more subtle stat cards with minimal colors
+- **Minimalist Category Cards**: clean design without heavy gradients and shadows
+- **Unified Trending Cards**: consistent styling across all card types
+
+### Friends Sidebar Compact Design
+- **Reduced width**: from 72 to 56 (w-56) for more screen space
+- **Compact Friend Cards**: smaller avatars (7x7), tighter spacing
+- **Smaller sections**: Online/Offline headers with reduced text size
+- **Ultra-thin scrollbar**: 4px, invisible by default, appears on hover
+
+### Persistent Chat Improvements
+- **Discrete chat button**: elegant, small button in bottom-right corner
+- **Visible on all pages**: chat accessible throughout the entire app
+- **Cleaner design**: removed excessive animations and decorations
+
+### Supabase Social Features
+- **Compatible schema**: Supabase social schema aligned with frontend expectations (tools/supabase_social_compatible.sql)
+- **RLS disabled temporarily**: for easier debugging of social features
+- **Chat participants fix**: column names corrected for UUID validation
+
+### Bug Fixes
+- **Chat Loop Fix**: added chatAttempted state to prevent infinite loop in startDirectChat
+- **Mock Data Removal**: removed invalid UUID mock data (user-123, etc.) that caused 400 errors
+- **Ollama IPC Fix**: replaced all check_ollama_status IPC calls with direct HTTP to localhost:11434
+- **Stores Link**: added Stores link in sidebar Resources section
+- **Epic Connect**: changed from broken OAuth to credentials modal
+- **Connection Test**: testConnection now uses real Tauri commands instead of simulated API
+- **Disconnect Fix**: added Epic/Steam credential deletion in Tauri backend
+- **Presence Fix**: added session guard in updatePresence to avoid 400 Bad Request
+
+---
+
+## What's New in v1.9.0
+
+### 🟢 Unified Online Presence
+
+Unified presence system combining Supabase Realtime and database:
+
+- **Instant updates**: Online users appear in real time (Supabase Realtime Presence)
+- **Global heartbeat**: Presence status updated automatically every 30 seconds
+- **Auto-away**: If the window is not focused for 2+ minutes, status becomes "Away"
+- **Auto-online**: When the window regains focus, status returns to "Online"
+- **DB fallback**: If Realtime is unavailable, the system uses the database as fallback
+- **Updated widget**: The "Online Users" widget shows usernames, avatars, and Realtime indicator
+
+### 🔔 System Tray Notifications
+
+Native OS notifications for important events:
+
+- **💬 Chat Messages**: OS notification when you receive a message in the community chat
+- **✅ Translations Completed**: Notification when a translation finishes successfully
+- **❌ Translation/System Errors**: Notification for critical errors (always visible, even when window is focused)
+- **🔄 App Updates**: Notification when a GameStringer update is available
+- **🎮 Game Updates**: Notification when an updated game may have invalidated the patch
+- **🟢 Friends Online**: Notification when a friend comes online
+- **📰 News**: Notifications for community news and updates
+
+**Configuration**: Settings → Notifications → System Tray Notifications
+- Toggle for each notification type
+- **Quiet Hours**: Suppress notifications during specific hours (e.g., 23:00-07:00)
+- **Test Button**: Send a test notification to verify functionality
+- **Tray Tooltip**: The tray icon shows the unread notification count
+
+### 🛡️ Error Boundaries + Crash Recovery
+
+Protection against component crashes:
+
+- **WidgetErrorBoundary**: If a widget (Chat, Background Translations, etc.) crashes, it shows a compact message and automatically attempts recovery after 5 seconds (max 3 attempts)
+- **AppErrorBoundary**: If the entire app crashes, it shows an error screen with "Reload App" option
+- **Auto-recovery**: Widgets restore automatically without user intervention
+
+### 🌐 Network Resilience / Offline Mode
+
+Graceful handling of disconnections:
+
+- **Network Monitor**: Detects online/offline status + Supabase health check every 30 seconds
+- **Connection Status Bar**: Red bar at top if offline, amber if Supabase is down, green when connection is restored
+- **Retry with Backoff**: Failed network operations are automatically retried with exponential backoff (1s, 2s, 4s)
+- **Offline Queue**: If you're offline, operations (chat messages, presence updates) are queued and executed when connection returns
+- **"Offline mode"**: Changes will be automatically synchronized when the connection returns
+
+### 🎙️ Character Voice Profiles (Voice Cloning)
+
+System to preserve character "voice" during translation:
+
+- **Auto-Extraction**: Analyzes game dialogue strings to identify characters and their linguistic style
+- **16 Available Tones**: Formal, Casual, Aggressive, Gentle, Mysterious, Comedic, Dramatic, Stoic, Sarcastic, Wise, Childish, Noble, Pirate, Military, Academic, Street
+- **5 Formality Levels**: Very formal → Very informal
+- **5 Age Groups**: Child, Teen, Young Adult, Adult, Elder
+- **Speech Patterns**: Automatic recognition of patterns (archaic words, exclamations, frequent questions)
+- **Catchphrases**: Automatic identification of recurring character expressions
+- **Prompt Injection**: Voice profiles are automatically injected into the translation prompt to maintain character consistency
+- **Default Profile**: Set a profile as fallback for unidentified characters
+
+**How to use**:
+1. On the Auto-Translate page, after loading files, the "Character Voice Profiles" panel appears
+2. Click **"Auto-Extract"** to analyze dialogues and create profiles
+3. Or create profiles manually with **"New Profile"**
+4. Profiles are applied automatically during translation
+
+### 🧠 Fine-Tuning Infrastructure
+
+System to generate training datasets and manage per-game models:
+
+- **Dataset from Corrections**: Generate JSONL datasets from human corrections (Adaptive MT)
+- **4 Export Formats**: OpenAI JSONL, Ollama JSONL, Alpaca JSON, ChatML TXT
+- **Approved Only**: Option to use only approved corrections in the dataset
+- **Model Management**: Register and manage fine-tuned models per game
+- **Ollama Integration**: Check Ollama availability for local training
+- **Dataset Statistics**: Example count, average length, quality score
+
+**How to use**:
+1. Go to **Settings → AI → Fine-Tuning Infrastructure**
+2. Select the language pair and click **"Generate"** to create the dataset from your corrections
+3. Click **"Export"** to download the dataset in your desired format
+4. Use the dataset for fine-tuning with Ollama or cloud providers
+
+### ⚡ Code Splitting / Lazy Loading
+
+Startup time optimization:
+
+- 8 heavy components (Chat, Background Jobs, Command Palette, etc.) are loaded only when needed
+- The app starts faster and uses less memory
+
+---
+
+GameStringer v1.9.0 - Guide updated 26/04/2026

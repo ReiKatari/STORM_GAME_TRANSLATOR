@@ -1,0 +1,432 @@
+'use client';
+
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Checkbox } from '@/components/ui/checkbox';
+import { invoke } from '@/lib/tauri-api';
+import { 
+  FolderOpen, 
+  Search, 
+  Cpu, 
+  Wand2, 
+  FileText, 
+  ExternalLink,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  Shield,
+  Gamepad2
+} from 'lucide-react';
+import { useTranslation } from '@/lib/i18n';
+import { clientLogger } from '@/lib/client-logger';
+
+interface InjectionTool {
+  name: string;
+  url: string;
+  description: string;
+  auto_install: boolean;
+}
+
+interface TranslatableFile {
+  path: string;
+  file_type: string;
+  description: string;
+}
+
+interface EngineDetectionResult {
+  engine: string;
+  engine_name: string;
+  version: string | null;
+  can_inject: boolean;
+  injection_method: string;
+  tools_required: InjectionTool[];
+  translatable_files: TranslatableFile[];
+  notes: string[];
+}
+
+interface InjectionResult {
+  success: boolean;
+  message: string;
+  steps_completed: string[];
+  files_modified: string[];
+  backup_path: string | null;
+}
+
+const ENGINE_COLORS: Record<string, string> = {
+  'Unity': 'bg-gradient-to-r from-gray-600 to-gray-800',
+  'UnrealEngine': 'bg-gradient-to-r from-blue-600 to-indigo-800',
+  'Godot': 'bg-gradient-to-r from-blue-500 to-cyan-600',
+  'RPGMakerMV': 'bg-gradient-to-r from-orange-500 to-red-600',
+  'RPGMakerMZ': 'bg-gradient-to-r from-orange-500 to-red-600',
+  'RPGMakerVXAce': 'bg-gradient-to-r from-orange-600 to-amber-600',
+  'RPGMakerXP': 'bg-gradient-to-r from-yellow-500 to-orange-500',
+  'GameMaker': 'bg-gradient-to-r from-green-500 to-emerald-600',
+  'RenPy': 'bg-gradient-to-r from-pink-500 to-rose-600',
+  'Kirikiri': 'bg-gradient-to-r from-purple-500 to-violet-600',
+  'NScripter': 'bg-gradient-to-r from-slate-500 to-slate-700',
+  'Wolf': 'bg-gradient-to-r from-amber-600 to-yellow-600',
+  'Unknown': 'bg-gradient-to-r from-gray-500 to-gray-600',
+};
+
+const ENGINE_ICONS: Record<string, string> = {
+  'Unity': '🎮',
+  'UnrealEngine': '🎯',
+  'Godot': '🤖',
+  'RPGMakerMV': '⚔️',
+  'RPGMakerMZ': '⚔️',
+  'RPGMakerVXAce': '🗡️',
+  'RPGMakerXP': '🗡️',
+  'GameMaker': '🕹️',
+  'RenPy': '💕',
+  'Kirikiri': '📖',
+  'NScripter': '📜',
+  'Wolf': '🐺',
+  'Unknown': '❓',
+};
+
+export function UniversalInjector() {
+  const { t } = useTranslation();
+  const [gamePath, setGamePath] = useState('');
+  const [isDetecting, setIsDetecting] = useState(false);
+  const [isInjecting, setIsInjecting] = useState(false);
+  const [detectionResult, setDetectionResult] = useState<EngineDetectionResult | null>(null);
+  const [injectionResult, setInjectionResult] = useState<InjectionResult | null>(null);
+  const [createBackup, setCreateBackup] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleBrowse = async () => {
+    try {
+      const selected = await invoke<string | null>('select_folder', {
+        title: 'Select game folder'
+      });
+      if (selected) {
+        setGamePath(selected);
+        setDetectionResult(null);
+        setInjectionResult(null);
+        setError(null);
+      }
+    } catch (e: unknown) {
+      clientLogger.error('Folder selection error:', e);
+    }
+  };
+
+  const handleDetect = async () => {
+    if (!gamePath) return;
+    
+    setIsDetecting(true);
+    setError(null);
+    setDetectionResult(null);
+    setInjectionResult(null);
+
+    try {
+      const result = await invoke<EngineDetectionResult>('detect_game_engine', {
+        gamePath
+      });
+      setDetectionResult(result);
+    } catch (e: unknown) {
+      setError(`Detection error: ${e}`);
+    } finally {
+      setIsDetecting(false);
+    }
+  };
+
+  const handleInject = async () => {
+    if (!detectionResult || !gamePath) return;
+    
+    setIsInjecting(true);
+    setError(null);
+
+    try {
+      const result = await invoke<InjectionResult>('inject_translation_hook', {
+        gamePath,
+        engine: detectionResult.engine,
+        createBackup
+      });
+      setInjectionResult(result);
+    } catch (e: unknown) {
+      setError(`Injection error: ${e}`);
+    } finally {
+      setIsInjecting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Hero Header */}
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-emerald-700 via-teal-600 to-cyan-700 p-3">
+        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+        
+        <div className="relative flex items-center gap-3">
+          <div className="p-2.5 bg-black/30 rounded-lg shadow-lg shadow-black/40 border border-white/10">
+            <Wand2 className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.7)]">{t('universalInjector.title')}</h2>
+            <p className="text-white/70 text-2xs drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">{t('universalInjector.subtitle')}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Game Path Selection */}
+      <Card>
+        <CardContent className="pt-4">
+          <div className="flex gap-2">
+            <Input
+              value={gamePath}
+              onChange={(e) => setGamePath(e.target.value)}
+              placeholder={t('universalInjector.gameFolderPath')}
+              className="flex-1 text-sm"
+            />
+            <Button variant="outline" size="sm" onClick={handleBrowse}>
+              <FolderOpen className="h-4 w-4 mr-1" />
+              {t('universalInjector.browse')}
+            </Button>
+            <Button 
+              onClick={handleDetect}
+              disabled={!gamePath || isDetecting}
+              size="sm"
+              className="bg-emerald-600 hover:bg-emerald-500"
+            >
+              {isDetecting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  <Search className="h-4 w-4 mr-1" />
+                  {t('universalInjector.detect')}
+                </>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Error Display */}
+      {error && (
+        <Card className="border-red-500/30 bg-red-500/10">
+          <CardContent className="py-3 flex items-center gap-2 text-red-500 text-sm">
+            <AlertCircle className="h-4 w-4" />
+            {error}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Detection Result */}
+      {detectionResult && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Engine Info */}
+          <Card>
+            <CardHeader className="py-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Cpu className="h-4 w-4" />
+                {t('universalInjector.detectedEngine')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className={`p-3 rounded-lg ${ENGINE_COLORS[detectionResult.engine] || ENGINE_COLORS['Unknown']}`}>
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{ENGINE_ICONS[detectionResult.engine] || '❓'}</span>
+                  <div>
+                    <p className="font-bold text-white">{detectionResult.engine_name}</p>
+                    {detectionResult.version && (
+                      <p className="text-xs text-white/80">Version: {detectionResult.version}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">{t('universalInjector.canBePatched')}</span>
+                  {detectionResult.can_inject ? (
+                    <Badge className="bg-green-500">{t('universalInjector.yes')}</Badge>
+                  ) : (
+                    <Badge variant="secondary">{t('universalInjector.manual')}</Badge>
+                  )}
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">{t('universalInjector.method')}</span>
+                  <span className="text-xs">{detectionResult.injection_method}</span>
+                </div>
+              </div>
+
+              {/* Notes */}
+              {detectionResult.notes.length > 0 && (
+                <div className="space-y-1">
+                  {detectionResult.notes.map((note, i) => (
+                    <p key={i} className="text-xs text-muted-foreground">• {note}</p>
+                  ))}
+                </div>
+              )}
+
+              {/* Inject Button */}
+              {detectionResult.can_inject && (
+                <div className="pt-2 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="backup"
+                      checked={createBackup}
+                      onCheckedChange={(c) => setCreateBackup(c as boolean)}
+                    />
+                    <label htmlFor="backup" className="text-xs text-muted-foreground">
+                      {t('universalInjector.createBackup')}
+                    </label>
+                  </div>
+                  <Button
+                    onClick={handleInject}
+                    disabled={isInjecting}
+                    className="w-full bg-blue-600 hover:bg-blue-500"
+                    size="sm"
+                  >
+                    {isInjecting ? (
+                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" />{t('universalInjector.injecting')}</>
+                    ) : (
+                      <><Shield className="h-4 w-4 mr-2" />{t('universalInjector.injectHook')}</>
+                    )}
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Tools & Files */}
+          <div className="space-y-4">
+            {/* Tools Required */}
+            {detectionResult.tools_required.length > 0 && (
+              <Card>
+                <CardHeader className="py-2">
+                  <CardTitle className="text-xs text-muted-foreground">{t('universalInjector.toolsRequired')}</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="space-y-2">
+                    {detectionResult.tools_required.map((tool, i) => (
+                      <div key={i} className="flex items-center justify-between p-2 bg-muted rounded-md">
+                        <div>
+                          <p className="text-sm font-medium">{tool.name}</p>
+                          <p className="text-xs text-muted-foreground">{tool.description}</p>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {tool.auto_install ? (
+                            <Badge className="bg-green-500 text-2xs">Auto</Badge>
+                          ) : (
+                            <a
+                              href={tool.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-400 hover:text-blue-300"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Translatable Files */}
+            {detectionResult.translatable_files.length > 0 && (
+              <Card>
+                <CardHeader className="py-2">
+                  <CardTitle className="text-xs text-muted-foreground">{t('universalInjector.translatableFiles')}</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <ScrollArea className="h-32">
+                    <div className="space-y-1">
+                      {detectionResult.translatable_files.map((file, i) => (
+                        <div key={i} className="flex items-center gap-2 text-xs p-1.5 bg-muted/50 rounded">
+                          <FileText className="h-3 w-3 text-muted-foreground" />
+                          <span className="flex-1 truncate font-mono">{file.path}</span>
+                          <Badge variant="outline" className="text-2xs">{file.file_type}</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Injection Result */}
+      {injectionResult && (
+        <Card className={injectionResult.success ? 'border-green-500/30 bg-green-500/5' : 'border-red-500/30 bg-red-500/5'}>
+          <CardContent className="py-4">
+            <div className="flex items-start gap-3">
+              {injectionResult.success ? (
+                <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5" />
+              ) : (
+                <AlertCircle className="h-5 w-5 text-red-500 mt-0.5" />
+              )}
+              <div className="flex-1">
+                <p className={`font-medium ${injectionResult.success ? 'text-green-500' : 'text-red-500'}`}>
+                  {injectionResult.message}
+                </p>
+                
+                {injectionResult.steps_completed.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {injectionResult.steps_completed.map((step, i) => (
+                      <p key={i} className="text-xs text-muted-foreground">✓ {step}</p>
+                    ))}
+                  </div>
+                )}
+
+                {injectionResult.backup_path && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    📁 Backup: {injectionResult.backup_path}
+                  </p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Supported Engines - Organized Grid */}
+      <Card className="bg-muted/20 border-muted">
+        <CardHeader className="py-3 pb-2">
+          <CardTitle className="text-xs text-muted-foreground flex items-center gap-2">
+            <Gamepad2 className="h-3.5 w-3.5" />
+            {t('universalInjector.supportedEngines')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0 pb-3">
+          <div className="flex flex-wrap gap-2">
+            {[
+              { icon: '🎮', name: 'Unity' },
+              { icon: '🎯', name: 'Unreal' },
+              { icon: '🤖', name: 'Godot' },
+              { icon: '🕹️', name: 'GameMaker' },
+              { icon: '⚔️', name: 'RPG Maker MV' },
+              { icon: '⚔️', name: 'RPG Maker MZ' },
+              { icon: '🗡️', name: 'RPG Maker VX' },
+              { icon: '🗡️', name: 'RPG Maker XP' },
+              { icon: '💕', name: "Ren'Py" },
+              { icon: '📖', name: 'Kirikiri' },
+              { icon: '📜', name: 'NScripter' },
+              { icon: '🐺', name: 'Wolf RPG' },
+            ].map((engine) => (
+              <div 
+                key={engine.name}
+                className="px-2.5 py-1.5 rounded-md border border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10 hover:border-emerald-400/50 transition-colors cursor-default"
+              >
+                <span className="text-xs text-emerald-300">{engine.icon} {engine.name}</span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+
+
+

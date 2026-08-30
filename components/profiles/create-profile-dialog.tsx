@@ -1,0 +1,504 @@
+'use client';
+
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { 
+  User, 
+  Eye, 
+  EyeOff, 
+  Upload,
+  CheckCircle,
+  AlertTriangle,
+  Loader2,
+  Camera,
+  Sparkles,
+  Shield,
+  Lock,
+  X
+} from 'lucide-react';
+import { useProfiles } from '@/hooks/use-profiles';
+import { CreateProfileRequest } from '@/types/profiles';
+import { useTranslation, Language } from '@/lib/i18n';
+import { Globe } from 'lucide-react';
+import { generateRecoveryKey, saveRecoveryKeyHash } from '@/lib/recovery-key';
+import { RecoveryKeyDisplay } from '@/components/profiles/recovery-key-display';
+import { VisuallyHidden } from 'radix-ui';
+import { DialogTitle } from '@/components/ui/dialog';
+
+interface CreateProfileDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onProfileCreated: (profileId: string) => void;
+}
+
+import { AVATAR_GRADIENTS, getAvatarGradient, getInitials } from '@/lib/avatar-utils';
+import { IT, GB, ES, FR, DE, JP, CN, KR, PT, RU, PL } from 'country-flag-icons/react/3x2';
+import { clientLogger } from '@/lib/client-logger';
+
+const LANGUAGES: { code: Language; name: string; Flag: React.ComponentType<{ className?: string }> }[] = [
+  { code: 'it', name: 'Italiano', Flag: IT },
+  { code: 'en', name: 'English', Flag: GB },
+  { code: 'es', name: 'Español', Flag: ES },
+  { code: 'fr', name: 'Français', Flag: FR },
+  { code: 'de', name: 'Deutsch', Flag: DE },
+  { code: 'ja', name: '日本語', Flag: JP },
+  { code: 'zh', name: '中文', Flag: CN },
+  { code: 'ko', name: '한국어', Flag: KR },
+  { code: 'pt', name: 'Português', Flag: PT },
+  { code: 'ru', name: 'Русский', Flag: RU },
+  { code: 'pl', name: 'Polski', Flag: PL },
+];
+
+export function CreateProfileDialog({ open, onOpenChange, onProfileCreated }: CreateProfileDialogProps) {
+  const { t, setLanguage } = useTranslation();
+  const [formData, setFormData] = useState({
+    name: '',
+    password: '',
+    confirmPassword: '',
+    avatarPath: '',
+    language: 'ru' as Language,
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
+  const [customImage, setCustomImage] = useState<string | null>(null);
+  const [recoveryKey, setRecoveryKey] = useState<string[]>([]);
+  const [showRecoveryKey, setShowRecoveryKey] = useState(false);
+  const [pendingProfileId, setPendingProfileId] = useState<string | null>(null);
+
+  const { createProfile } = useProfiles();
+
+  // Gestione upload immagine personalizzata
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Verifica tipo file
+    if (!file.type.startsWith('image/')) {
+      setError(t('profile.selectValidImage'));
+      return;
+    }
+    
+    // Verifica dimensione (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      setError(t('profile.imageTooLarge'));
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target?.result as string;
+      setCustomImage(base64);
+      setSelectedAvatar(null); // Deseleziona i preset
+      setFormData(prev => ({ ...prev, avatarPath: `custom:${base64}` }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    setError(null);
+  };
+
+  const handleAvatarSelect = (gradientId: string) => {
+    setSelectedAvatar(gradientId);
+    setCustomImage(null); // Reset immagine custom quando si seleziona un preset
+    setFormData(prev => ({ ...prev, avatarPath: gradientId }));
+  };
+
+  const validateForm = (): string | null => {
+    if (!formData.name.trim()) {
+      return t('profile.nameRequired');
+    }
+
+    if (formData.name.length < 2) {
+      return t('profile.nameMinChars');
+    }
+
+    if (formData.name.length > 50) {
+      return t('profile.nameMaxChars');
+    }
+
+    if (!formData.password) {
+      return t('profile.passwordRequired');
+    }
+
+    if (formData.password.length < 6) {
+      return t('profile.passwordMinCharsValidation');
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      return t('profile.passwordsDoNotMatch');
+    }
+
+    return null;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const validationError = validateForm();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    setIsCreating(true);
+    setError(null);
+
+    const request: CreateProfileRequest = {
+      name: formData.name.trim(),
+      password: formData.password,
+      avatar_path: formData.avatarPath || undefined,
+    };
+
+    const success = await createProfile(request);
+    
+    if (success) {
+      clientLogger.debug('✅ Profile created successfully:', request.name);
+      
+      // Genera Recovery Key
+      const newRecoveryKey = generateRecoveryKey();
+      setRecoveryKey(newRecoveryKey);
+      
+      // Salva hash della recovery key (usa il nome come ID temporaneo)
+      await saveRecoveryKeyHash(request.name, newRecoveryKey);
+      
+      // Mostra dialog recovery key
+      setPendingProfileId(request.name);
+      setShowRecoveryKey(true);
+    } else {
+      clientLogger.error('❌ Error during profile creation');
+      setError(t('profile.errorCreatingProfile'));
+    }
+    
+    setIsCreating(false);
+  };
+
+  const handleRecoveryKeyConfirmed = () => {
+    // Reset form
+    // Applica la lingua selezionata
+    setLanguage(formData.language);
+    
+    // Salva lingua per il nuovo profilo
+    try {
+      localStorage.setItem(`gs_language_${pendingProfileId}`, formData.language);
+    } catch (e: unknown) {
+      clientLogger.warn('Failed to save language for profile:', e);
+    }
+    
+    setFormData({
+      name: '',
+      password: '',
+      confirmPassword: '',
+      avatarPath: '',
+      language: 'en' as Language,
+    });
+    setSelectedAvatar(null);
+    setCustomImage(null);
+    setRecoveryKey([]);
+    setShowRecoveryKey(false);
+    
+    // Chiudi il dialog
+    onOpenChange(false);
+    
+    // Notifica il ProtectedRoute
+    if (pendingProfileId) {
+      onProfileCreated(pendingProfileId);
+      setPendingProfileId(null);
+    }
+  };
+
+  const handleClose = () => {
+    if (!isCreating && !showRecoveryKey) {
+      setFormData({
+        name: '',
+        password: '',
+        confirmPassword: '',
+        avatarPath: '',
+        language: 'en' as Language,
+      });
+      setSelectedAvatar(null);
+      setCustomImage(null);
+      setError(null);
+      onOpenChange(false);
+    }
+  };
+
+
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-sm p-0 overflow-hidden bg-slate-900/60 backdrop-blur-2xl border-white/10 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+        <VisuallyHidden.Root><DialogTitle>{t('profile.newProfile')}</DialogTitle></VisuallyHidden.Root>
+        
+        {/* Hero Header */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-indigo-600 to-rose-600 p-3">
+          <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+          
+          <button 
+            onClick={handleClose}
+            className="absolute top-3 right-3 p-1.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+          >
+            <X className="h-4 w-4 text-white" />
+          </button>
+          
+          <div className="relative flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-white/20 backdrop-blur-sm shadow-lg">
+              <Sparkles className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-white drop-shadow-lg">{t('profile.newProfile')}</h2>
+              <p className="text-white/70 text-xs">{t('profile.customizeExperience')}</p>
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.form 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+          onSubmit={handleSubmit} 
+          className="p-4 space-y-4">
+          {/* Avatar Section */}
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3, delay: 0.15 }}
+            className="flex items-center gap-3 p-2.5 rounded-lg bg-gradient-to-r from-blue-500/10 to-rose-500/10 border border-blue-500/20">
+            <label className="cursor-pointer group relative shrink-0">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+                disabled={isCreating}
+              />
+              <Avatar className="h-12 w-12 ring-2 ring-blue-500/50 shadow-md group-hover:ring-blue-400 transition-all">
+                {customImage ? (
+                  <AvatarImage src={customImage} alt="Avatar" />
+                ) : null}
+                <AvatarFallback className={`bg-gradient-to-br ${getAvatarGradient(formData.avatarPath)} text-white text-xl font-bold`}>
+                  {formData.name ? getInitials(formData.name) : <Camera className="h-6 w-6" />}
+                </AvatarFallback>
+              </Avatar>
+              <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                <Upload className="h-5 w-5 text-white" />
+              </div>
+            </label>
+            
+            <div className="flex-1">
+              <p className="text-xs font-medium text-blue-300 mb-1.5">{t('profile.chooseColor')}</p>
+              <div className="flex flex-wrap gap-1.5">
+                {AVATAR_GRADIENTS.map((avatar) => (
+                  <button
+                    key={avatar.id}
+                    type="button"
+                    onClick={() => handleAvatarSelect(avatar.id)}
+                    className={`w-7 h-7 rounded-full bg-gradient-to-br ${avatar.gradient} transition-all ${
+                      selectedAvatar === avatar.id
+                        ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-950 scale-110'
+                        : 'hover:scale-110'
+                    }`}
+                    title={avatar.name}
+                  />
+                ))}
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Language Selector */}
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3, delay: 0.18 }}
+            className="p-2.5 rounded-lg bg-slate-900/50 border border-slate-700/50">
+            <div className="flex items-center gap-2 mb-2.5">
+              <Globe className="h-3.5 w-3.5 text-indigo-400" />
+              <span className="text-xs font-medium text-slate-300">{t('profile.interfaceLanguage')}</span>
+              <span className="text-xs text-indigo-400 font-semibold ml-auto">{LANGUAGES.find(l => l.code === formData.language)?.name}</span>
+            </div>
+            <div className="grid grid-cols-6 gap-1.5">
+              {LANGUAGES.map((lang) => {
+                const isSelected = formData.language === lang.code;
+                return (
+                  <button
+                    key={lang.code}
+                    type="button"
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, language: lang.code }));
+                      setLanguage(lang.code);
+                    }}
+                    disabled={isCreating}
+                    className={`flex flex-col items-center gap-0.5 p-1.5 rounded-lg transition-all ${
+                      isSelected
+                        ? 'ring-2 ring-indigo-500 bg-indigo-500/20 shadow-lg shadow-indigo-500/20'
+                        : 'opacity-60 hover:opacity-100 hover:bg-slate-800/50'
+                    }`}
+                    title={lang.name}
+                  >
+                    <lang.Flag className="w-6 h-4 rounded-[2px] shadow-sm" />
+                    <span className={`text-micro font-medium leading-none ${
+                      isSelected ? 'text-indigo-300' : 'text-slate-500'
+                    }`}>{lang.code.toUpperCase()}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </motion.div>
+
+          {/* Form Fields */}
+          <div className="space-y-4">
+            {/* Nome */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                <User className="h-3 w-3" />
+                {t('profile.profileName')}
+              </label>
+              <Input
+                type="text"
+                value={formData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                placeholder={t('profile.namePlaceholder')}
+                disabled={isCreating}
+                maxLength={50}
+                className="h-10 bg-slate-900/50 border-slate-700 focus:border-blue-500 focus:ring-blue-500/20 text-white placeholder:text-slate-500"
+              />
+            </div>
+
+            {/* Password */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Lock className="h-3 w-3" />
+                {t('profile.password')}
+              </label>
+              <div className="relative">
+                <Input
+                  type={showPassword ? 'text' : 'password'}
+                  value={formData.password}
+                  onChange={(e) => handleInputChange('password', e.target.value)}
+                  placeholder={t('profile.passwordMinChars')}
+                  disabled={isCreating}
+                  className="h-10 pr-10 bg-slate-900/50 border-slate-700 focus:border-blue-500 focus:ring-blue-500/20 text-white placeholder:text-slate-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Conferma Password */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                <CheckCircle className="h-3 w-3" />
+                {t('profile.confirmPassword')}
+              </label>
+              <div className="relative">
+                <Input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={formData.confirmPassword}
+                  onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                  placeholder={t('profile.repeatPassword')}
+                  disabled={isCreating}
+                  className="h-10 pr-10 bg-slate-900/50 border-slate-700 focus:border-blue-500 focus:ring-blue-500/20 text-white placeholder:text-slate-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                >
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Error */}
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/30"
+              >
+                <AlertTriangle className="h-4 w-4 text-red-400 shrink-0" />
+                <p className="text-sm text-red-300">{error}</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Security Badge */}
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.25 }}
+            className="flex items-center gap-3 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+            <Shield className="h-5 w-5 text-emerald-400" />
+            <div className="text-xs">
+              <p className="font-medium text-emerald-300">{t('profile.aesProtection')}</p>
+              <p className="text-emerald-400/70">{t('profile.dataEncrypted')}</p>
+            </div>
+          </motion.div>
+
+          {/* Actions */}
+          <div className="flex gap-3 pt-2">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={handleClose}
+              disabled={isCreating}
+              className="flex-1 h-10 text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-700"
+            >
+              {t('common.cancel')}
+            </Button>
+            <Button
+              type="submit"
+              disabled={isCreating}
+              className="flex-1 h-10 bg-blue-600 hover:bg-blue-500 text-white border-0"
+            >
+              {isCreating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {t('profile.creating')}
+                </>
+              ) : (
+                <>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  {t('profile.createProfile')}
+                </>
+              )}
+            </Button>
+          </div>
+        </motion.form>
+
+        {/* Recovery Key Display Dialog */}
+        <RecoveryKeyDisplay
+          open={showRecoveryKey}
+          onOpenChange={setShowRecoveryKey}
+          recoveryKey={recoveryKey}
+          profileName={formData.name || pendingProfileId || ''}
+          onConfirm={handleRecoveryKeyConfirmed}
+        />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
+
