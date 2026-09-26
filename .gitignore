@@ -70,3 +70,17 @@ installer/Output/
 *.tmp*
 *.wal
 
+
+# Cache & credentials
+.cache/
+src-tauri/.cache/
+*gog_credentials*
+
+# Extracted APK artifacts & test databases
+extracted_apk/
+test-results/
+*.pdb
+*.bak
+src-tauri/*.db
+__pycache__/
+*.pyc
